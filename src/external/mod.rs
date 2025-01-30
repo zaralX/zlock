@@ -228,6 +228,17 @@ impl External
     pub fn get_player_by_index(&self, index: usize) -> &Player {
         &self.players[index - 1]
     }
+
+    pub fn get_nearest_player(&self) -> Option<&Player> {
+        self.players
+            .iter()
+            .filter(|player| player.index != self.get_local_player().index) // Исключаем локального игрока
+            .min_by(|a, b| {
+                let dist_a = Vector3::distance(a.game_scene_node.position, self.get_local_player().game_scene_node.position);
+                let dist_b = Vector3::distance(b.game_scene_node.position, self.get_local_player().game_scene_node.position);
+                dist_a.partial_cmp(&dist_b).unwrap_or(std::cmp::Ordering::Equal)
+            })
+    }
 }
 
 // float RealTime; //0x0000

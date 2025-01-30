@@ -96,6 +96,15 @@ impl AbilitiesComponent
         }
         None
     }
+
+    pub fn get_by_index(&self, index: usize) -> Option<&Ability> {
+        for ability in self.list.iter() {
+            if ability.index == index {
+                return Some(ability);
+            }
+        }
+        None
+    }
 }
 
 #[derive(Default)]

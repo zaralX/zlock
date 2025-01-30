@@ -1,7 +1,7 @@
+use super::HeroScript;
+use crate::{external::{cheat::aim::{self, aiming}, interfaces::{entities::Player, enums::{AbilitySlot, Hero}, math::Vector3}, External}, input::{keyboard::{self, KeyState, VirtualKeys}, mouse}, settings::structs::{AimProperties, Settings}};
 use egui::{Align2, Color32, FontId};
 use egui_notify::Toasts;
-use crate::{external::{cheat::aim::{self, aiming}, interfaces::{entities::Player, enums::{AbilitySlot, Hero}, math::Vector3}, External}, input::{keyboard::{self, KeyState, VirtualKeys}, mouse}, settings::structs::{AimProperties, Settings}};
-use super::HeroScript;
 
 #[derive(Default)]
 pub struct Shiv {}
@@ -12,8 +12,7 @@ impl Shiv {
             let health_perc = 100f32 / player.data.max_health as f32 * player.data.health as f32;
             let can_kill: bool = if upgrade < 7 {
                 health_perc < 19.9f32 // 20%
-            }
-            else {
+            } else {
                 health_perc < 27.9f32 // 28%
             };
             if player.data.health <= 195 || can_kill {
@@ -27,25 +26,37 @@ impl Shiv {
 impl HeroScript for Shiv {
     fn update(&mut self, game: &External, _: KeyState, settings: &mut Settings) {
         if settings.aim.players.enable {
+            // setting shiv auto ult
             unsafe {
-                if aiming::player_index.is_some() {
-                    let local_player = game.get_local_player();
-                    let ult_ability = local_player.abilities.get(AbilitySlot::ESlot_Signature_4);
-                    if ult_ability.is_none() {
-                        return;
-                    }
-                    let ult_ability = ult_ability.unwrap();
-                    if ult_ability.coodown {
-                        return;
-                    }
-                    let upgrade = ult_ability.points;
-                    let player = game.get_player_by_index(aiming::player_index.unwrap());
-                    let screen_center = game.screen.center();
-                    if Vector3::distance(aim::drawing::DISPLAY_POS, Vector3 { x: screen_center.x, y: screen_center.y, z: 0f32 }) < 355f32 {
-                        if (Vector3::distance(player.game_scene_node.position, local_player.game_scene_node.position) * 0.0254 < 20f32) && self.can_kill(local_player, player, upgrade) {
-                            keyboard::send_key(VirtualKeys::KEY_4);
-                        }
-                    }
+                let local_player = game.get_local_player();
+                let ult_ability = local_player.abilities.get_by_index(15);
+                // log::info!("-----");
+                // for ability in &local_player.abilities.list {
+                //     log::info!("{} {} {} {:?} {:?}", ability.index, ability.points, ability.coodown, ability.slot, ability.ptr);
+                // }
+                if ult_ability.is_none() {
+                    return;
+                }
+                let ult_ability = ult_ability.unwrap();
+                if ult_ability.coodown {
+                    return;
+                }
+                let upgrade = ult_ability.points;
+                let nearest_player = game.get_nearest_player();
+                if nearest_player.is_none() {
+                    return;
+                }
+                let target = nearest_player.unwrap();
+                let screen_center = game.screen.center();
+                // let mut target_pos = target.skeleton.target_bone_pos.clone();
+                // if settings.players.velocity_prediction
+                // {
+                //     target_pos = crate::external::cheat::aim::aiming::calc_velocity(target_pos, target.pawn.velocity, &settings.players);
+                // }
+                // let mut target_pos_screen = target_pos;
+                // game.view_matrix.transform(&mut target_pos_screen);
+                if (Vector3::distance(target.game_scene_node.position, local_player.game_scene_node.position) * 0.0254 < 20f32) && self.can_kill(local_player, target, upgrade) {
+                    keyboard::send_key(VirtualKeys::KEY_4);
                 }
             }
         }
@@ -77,7 +88,7 @@ impl HeroScript for Shiv {
     fn hero_id(&self) -> Hero {
         Hero::Shiv
     }
-    
+
     fn name(&self) -> &str {
         "Enemy health threshold"
     }
@@ -88,8 +99,7 @@ impl HeroScript for Shiv {
 }
 
 #[derive(Default)]
-pub struct VindictaUlt { 
- }
+pub struct VindictaUlt {}
 
 impl HeroScript for VindictaUlt {
     fn update(&mut self, game: &External, key_state: KeyState, settings: &mut Settings) {
@@ -118,9 +128,7 @@ impl HeroScript for VindictaUlt {
         }
     }
 
-    fn draw(&mut self, _g: &egui::Painter, _game: &External, _toasts: &mut Toasts) {
-        
-    }
+    fn draw(&mut self, _g: &egui::Painter, _game: &External, _toasts: &mut Toasts) {}
 
     fn hero_id(&self) -> Hero {
         Hero::Vindicta
