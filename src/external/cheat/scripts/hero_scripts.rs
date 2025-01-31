@@ -172,7 +172,7 @@ impl HeroScript for VindictaUlt {
     }
 
     fn name(&self) -> &str {
-        "Quick ult"
+        "Quick ult + Auto fire"
     }
 
     fn init_key_code(&self) -> Option<i32> {
