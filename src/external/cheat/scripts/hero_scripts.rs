@@ -2,6 +2,7 @@ use super::HeroScript;
 use crate::{external::{cheat::aim::{self, aiming}, interfaces::{entities::Player, enums::{AbilitySlot, Hero}, math::Vector3}, External}, input::{keyboard::{self, KeyState, VirtualKeys}, mouse}, settings::structs::{AimProperties, Settings}};
 use egui::{Align2, Color32, FontId};
 use egui_notify::Toasts;
+use crate::external::cheat::aim::drawing;
 
 #[derive(Default)]
 pub struct Shiv {}
@@ -29,11 +30,7 @@ impl HeroScript for Shiv {
             // setting shiv auto ult
             unsafe {
                 let local_player = game.get_local_player();
-                let ult_ability = local_player.abilities.get_by_index(15);
-                // log::info!("-----");
-                // for ability in &local_player.abilities.list {
-                //     log::info!("{} {} {} {:?} {:?}", ability.index, ability.points, ability.coodown, ability.slot, ability.ptr);
-                // }
+                let ult_ability = local_player.abilities.get(AbilitySlot::ESlot_Signature_4);
                 if ult_ability.is_none() {
                     return;
                 }
@@ -48,15 +45,14 @@ impl HeroScript for Shiv {
                 }
                 let target = nearest_player.unwrap();
                 let screen_center = game.screen.center();
-                // let mut target_pos = target.skeleton.target_bone_pos.clone();
-                // if settings.players.velocity_prediction
-                // {
-                //     target_pos = crate::external::cheat::aim::aiming::calc_velocity(target_pos, target.pawn.velocity, &settings.players);
-                // }
-                // let mut target_pos_screen = target_pos;
-                // game.view_matrix.transform(&mut target_pos_screen);
-                if (Vector3::distance(target.game_scene_node.position, local_player.game_scene_node.position) * 0.0254 < 20f32) && self.can_kill(local_player, target, upgrade) {
-                    keyboard::send_key(VirtualKeys::KEY_4);
+                let mut target_pos = target.skeleton.target_bone_pos.clone();
+                let mut target_pos_screen = target_pos;
+                game.view_matrix.transform(&mut target_pos_screen);
+                let target_screen_3d = Vector3 { x: target_pos_screen.x, y: target_pos_screen.y, z: 0f32 };
+                if Vector3::distance(target_screen_3d, Vector3 { x: screen_center.x, y: screen_center.y, z: 0f32 }) < 355f32 {
+                    if (Vector3::distance(target.game_scene_node.position, local_player.game_scene_node.position) * 0.0254 < 20f32) && self.can_kill(local_player, target, upgrade) {
+                        keyboard::send_key(VirtualKeys::KEY_4);
+                    }
                 }
             }
         }

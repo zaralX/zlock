@@ -30,7 +30,7 @@ pub fn update(settings: &AimSettings, game: &mut External, socket: &UdpSocket)
                 game.view_matrix.transform(&mut target_pos_screen);
                 drawing::DISPLAY_POS = Vector3 { x: target_pos_screen.x, y: target_pos_screen.y, z: 0f32 };
                 aim_to(target_pos, settings.angle_per_pixel, game, &settings.players, socket);
-            },
+            }
             None => {
                 match entity_array_index {
                     Some(entity_index) => {
@@ -45,10 +45,10 @@ pub fn update(settings: &AimSettings, game: &mut External, socket: &UdpSocket)
                             target_pos.z += 45f32;
                         }
                         aim_to(target_pos, settings.angle_per_pixel, game, &settings.creeps, socket);
-                    },
+                    }
                     _ => (),
                 }
-            },
+            }
         }
     }
 }
@@ -71,9 +71,7 @@ unsafe fn update_targets(settings: &AimSettings, game: &mut External)
                     return;
                 }
             }
-        }
-        else
-        {
+        } else {
             player_index = None;
         }
     }
@@ -93,9 +91,7 @@ unsafe fn update_targets(settings: &AimSettings, game: &mut External)
                     return;
                 }
             }
-        }
-        else
-        {
+        } else {
             entity_array_index = None;
         }
     }
@@ -120,7 +116,7 @@ pub fn find_player(game: &External, local_player: &Player, settings: &AimPropert
                 if cur_distance < distance && Vector3::distance(p.game_scene_node.position, local_player.game_scene_node.position) < settings.range
                 {
                     distance = cur_distance;
-                    unsafe { 
+                    unsafe {
                         player_index = Some(p.index as usize);
                     };
                 }
@@ -147,34 +143,32 @@ fn find_entity(game: &External, local_player: &Player, settings: &AimProperties,
             continue;
         }
         if ent.class.as_priority_2(global_settings.priority) >= priority
+        {
+            if ent.class.as_priority_2(global_settings.priority) > priority
             {
-                if ent.class.as_priority_2(global_settings.priority) > priority
+                distance = 9999f32;
+            }
+            let mut head_pos = ent.game_scene_node.position.clone();
+            if ent.class == EntityType::Creep
+            {
+                head_pos.z += 35f32;
+            } else {
+                // Добавить настройку: Проверка на видимось?
+            }
+            if !ent.game_scene_node.dormant && game.view_matrix.transform(&mut head_pos) && in_fov(head_pos, center, settings.fov)
+            {
+                let cur_distance = Vector3::distance_2d(head_pos, Vector3::from_pos2(center));
+                if cur_distance < distance && Vector3::distance(ent.game_scene_node.position, local_player.game_scene_node.position) < settings.range
                 {
-                    distance = 9999f32;
-                }
-                let mut head_pos = ent.game_scene_node.position.clone();
-                if ent.class == EntityType::Creep
-                {
-                    head_pos.z += 35f32;
-                }
-                else
-                {
-                    // Добавить настройку: Проверка на видимось?
-                }
-                if !ent.game_scene_node.dormant && game.view_matrix.transform(&mut head_pos) && in_fov(head_pos, center, settings.fov)
-                {
-                    let cur_distance = Vector3::distance_2d(head_pos, Vector3::from_pos2(center));
-                    if cur_distance < distance && Vector3::distance(ent.game_scene_node.position, local_player.game_scene_node.position) < settings.range
-                    {
-                        priority = ent.class.as_priority_2(global_settings.priority);
-                        distance = cur_distance;
-                        unsafe {
-                            entity_array_index = Some(i);
-                        };
-                    }
+                    priority = ent.class.as_priority_2(global_settings.priority);
+                    distance = cur_distance;
+                    unsafe {
+                        entity_array_index = Some(i);
+                    };
                 }
             }
-            i += 1;
+        }
+        i += 1;
     }
 }
 
@@ -263,7 +257,7 @@ fn angle_to_signed(vec1: Vector3, vec2: Vector3, about: Vector3) -> f32
 
     let plane = Plane3D::from_point(about, Vector3::default());
     let vector_on_plane = Vector3::normalize(plane.project_vector(vec1).1);
-    let other_on_plane =  Vector3::normalize(plane.project_vector(vec2).1);
+    let other_on_plane = Vector3::normalize(plane.project_vector(vec2).1);
 
     let sign = Vector3::dot(Vector3::normalize(Vector3::cross(vector_on_plane, other_on_plane)), plane.normal);
     angle_between_unit_vectors(vector_on_plane, other_on_plane) * sign
@@ -282,7 +276,7 @@ fn acos_clamped(value: f32, tolerance: f32) -> f32
     }
     if value < tolerance - 1f32
     {
-        return  std::f32::consts::PI; // здец
+        return std::f32::consts::PI; // здец
     }
     value.acos()
 }
@@ -321,7 +315,7 @@ pub fn calibrate(game: &mut External) -> f32
     angles.push(calibrate_angle(10, client_ptr));
     angles.push(calibrate_angle(10, client_ptr));
     angles.push(calibrate_angle(10, client_ptr));
-    
+
     angles.push(calibrate_angle(-10, client_ptr));
     angles.push(calibrate_angle(-10, client_ptr));
     angles.push(calibrate_angle(-10, client_ptr));
