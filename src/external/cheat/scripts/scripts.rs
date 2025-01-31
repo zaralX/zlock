@@ -224,7 +224,7 @@ impl HeroScript for MovementScript {
 #[derive(Default)]
 pub struct AutoFire {}
 impl HeroScript for AutoFire {
-    fn update(&mut self, game: &crate::external::External, key_state: KeyState, _settings: &mut crate::settings::structs::Settings) {
+    fn update(&mut self, game: &crate::external::External, _: KeyState, _settings: &mut crate::settings::structs::Settings) {
         let player = game.get_nearest_screen();
         if !player.is_some() {
             return;
