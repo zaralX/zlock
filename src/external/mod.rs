@@ -232,7 +232,7 @@ impl External
     pub fn get_nearest_player(&self) -> Option<&Player> {
         self.players
             .iter()
-            .filter(|player| player.index != self.get_local_player().index) // Исключаем локального игрока
+            .filter(|player| player.index != self.get_local_player().index && player.pawn.team != self.get_local_player().pawn.team) // Исключаем локального игрока
             .min_by(|a, b| {
                 let dist_a = Vector3::distance(a.game_scene_node.position, self.get_local_player().game_scene_node.position);
                 let dist_b = Vector3::distance(b.game_scene_node.position, self.get_local_player().game_scene_node.position);
@@ -244,7 +244,7 @@ impl External
         self.players
             .iter()
             .filter(|player| {
-                player.index != self.get_local_player().index && player.data.health < max_hp && player.is_alive()
+                player.index != self.get_local_player().index && player.data.health < max_hp && player.is_alive() && player.pawn.team != self.get_local_player().pawn.team
             }) // Фильтруем игроков по ХП
             .min_by(|a, b| {
                 let hp_a = max_hp - a.data.health;
@@ -260,6 +260,23 @@ impl External
             })
     }
 
+    pub fn get_nearest_screen(&self) -> Option<&Player> {
+        self.players
+            .iter()
+            .filter(|player| player.index != self.get_local_player().index && player.is_alive() && player.pawn.team != self.get_local_player().pawn.team) // Исключаем локального игрока
+            .min_by(|a, b| {
+                let screen_center = self.screen.center();
+                let mut target_pos_a = a.skeleton.target_bone_pos;
+                let mut target_pos_b = b.skeleton.target_bone_pos;
+                self.view_matrix.transform(&mut target_pos_a);
+                self.view_matrix.transform(&mut target_pos_b);
+
+                let screen_distance_a = Vector3::distance(Vector3 { x: target_pos_a.x, y: target_pos_a.y, z: 0.0 }, Vector3 { x: screen_center.x, y: screen_center.y, z: 0.0 });
+                let screen_distance_b = Vector3::distance(Vector3 { x: target_pos_b.x, y: target_pos_b.y, z: 0.0 }, Vector3 { x: screen_center.x, y: screen_center.y, z: 0.0 });
+
+                screen_distance_a.partial_cmp(&screen_distance_b).unwrap_or(std::cmp::Ordering::Equal)
+            })
+    }
 }
 
 // float RealTime; //0x0000

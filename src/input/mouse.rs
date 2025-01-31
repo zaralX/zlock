@@ -27,3 +27,27 @@ pub fn left_click()
         SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
     }
 }
+
+pub fn left_down()
+{
+    let mut input = INPUT::default();
+    input.r#type = INPUT_MOUSE;
+    input.Anonymous.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+
+    let inputs = [input];
+    unsafe {
+        SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
+    }
+}
+
+pub fn left_up()
+{
+    let mut input = INPUT::default();
+    input.r#type = INPUT_MOUSE;
+    input.Anonymous.mi.dwFlags = MOUSEEVENTF_LEFTUP;
+
+    let inputs = [input];
+    unsafe {
+        SendInput(&inputs, std::mem::size_of::<INPUT>() as i32);
+    }
+}

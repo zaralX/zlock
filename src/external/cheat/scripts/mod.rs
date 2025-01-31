@@ -14,6 +14,7 @@ pub fn get_scripts() -> Vec<(Arc<Mutex<dyn HeroScript>>, HeroScriptSettings)> {
         (Arc::new(Mutex::new(EntityPriorityToggle::default())), HeroScriptSettings::default()),
         (Arc::new(Mutex::new(RadarToggle::default())), HeroScriptSettings::default()),
         (Arc::new(Mutex::new(MovementScript::default())), HeroScriptSettings::default()),
+        (Arc::new(Mutex::new(AutoFire::default())), HeroScriptSettings::default()),
 
         // для героев
         (Arc::new(Mutex::new(Shiv::default())), HeroScriptSettings::default()),

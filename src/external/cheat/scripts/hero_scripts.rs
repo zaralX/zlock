@@ -1,5 +1,5 @@
 use super::HeroScript;
-use crate::{external::{cheat::aim::{self}, interfaces::{entities::Player, enums::{AbilitySlot, Hero}, math::Vector3}, External}, input::{keyboard::{self, KeyState, VirtualKeys}, mouse}, settings::structs::{AimProperties, Settings}};
+use crate::{external::{cheat::aim::{self}, interfaces::{entities::Player, enums::{AbilitySlot, Hero}, math::Vector3}, External}, input::{keyboard::{self, KeyState, VirtualKeys}, mouse}, settings::structs::Settings};
 use egui::{Align2, Color32, FontId};
 use egui_notify::Toasts;
 

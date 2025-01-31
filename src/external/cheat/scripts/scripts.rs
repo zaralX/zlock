@@ -2,6 +2,8 @@ use std::time::Instant;
 
 use egui_notify::Toasts;
 use crate::{external::{interfaces::{entities::Player, enums::{AbilitySlot, Hero}, structs::Ability}, offsets::client_dll::{CCitadel_Ability_PrimaryWeapon, CCitadel_Ability_Slide}}, input::keyboard::{self, KeyState, VirtualKeys}, memory::read_memory, settings::structs::Priority};
+use crate::external::interfaces::math::Vector3;
+use crate::input::mouse;
 use super::HeroScript;
 
 pub struct EntityPriorityToggle {
@@ -217,4 +219,38 @@ impl HeroScript for MovementScript {
     fn init_key_code(&self) -> Option<i32> {
         Some(VirtualKeys::KEY_G as i32)
     }
+}
+
+#[derive(Default)]
+pub struct AutoFire {}
+impl HeroScript for AutoFire {
+    fn update(&mut self, game: &crate::external::External, key_state: KeyState, _settings: &mut crate::settings::structs::Settings) {
+        let player = game.get_nearest_screen();
+        if !player.is_some() {
+            return;
+        }
+        let player = player.unwrap();
+        let screen_center = game.screen.center();
+        let mut target_pos = player.skeleton.target_bone_pos;
+        game.view_matrix.transform(&mut target_pos);
+
+        let target_screen_3d = Vector3 { x: target_pos.x, y: target_pos.y, z: 0.0 };
+        let screen_distance = Vector3::distance(target_screen_3d, Vector3 { x: screen_center.x, y: screen_center.y, z: 0.0 });
+
+        if screen_distance > 15.0 {
+            return;
+        }
+
+        let mut pos = player.skeleton.head_pos;
+        pos.z -= 20f32;
+        mouse::left_down();
+        std::thread::spawn(|| {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+            mouse::left_up();
+        });
+    }
+    fn draw(&mut self, _: &egui::Painter, _: &crate::external::External, _: &mut Toasts) {}
+    fn hero_id(&self) -> Hero { Hero::None }
+    fn name(&self) -> &str {"AutoFire!"}
+    fn init_key_code(&self) -> Option<i32> { None }
 }
