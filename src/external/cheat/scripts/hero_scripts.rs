@@ -1,8 +1,7 @@
 use super::HeroScript;
-use crate::{external::{cheat::aim::{self, aiming}, interfaces::{entities::Player, enums::{AbilitySlot, Hero}, math::Vector3}, External}, input::{keyboard::{self, KeyState, VirtualKeys}, mouse}, settings::structs::{AimProperties, Settings}};
+use crate::{external::{cheat::aim::{self}, interfaces::{entities::Player, enums::{AbilitySlot, Hero}, math::Vector3}, External}, input::{keyboard::{self, KeyState, VirtualKeys}, mouse}, settings::structs::{AimProperties, Settings}};
 use egui::{Align2, Color32, FontId};
 use egui_notify::Toasts;
-use crate::external::cheat::aim::drawing;
 
 #[derive(Default)]
 pub struct Shiv {}
@@ -26,37 +25,35 @@ impl Shiv {
 
 impl HeroScript for Shiv {
     fn update(&mut self, game: &External, _: KeyState, settings: &mut Settings) {
-        if settings.aim.players.enable {
-            // setting shiv auto ult
-            unsafe {
-                let local_player = game.get_local_player();
-                let ult_ability = local_player.abilities.get(AbilitySlot::ESlot_Signature_4);
-                if ult_ability.is_none() {
-                    return;
-                }
-                let ult_ability = ult_ability.unwrap();
-                if ult_ability.coodown {
-                    return;
-                }
-                let upgrade = ult_ability.points;
-                let nearest_player = game.get_nearest_player();
-                if nearest_player.is_none() {
-                    return;
-                }
-                let target = nearest_player.unwrap();
-                let screen_center = game.screen.center();
-                let mut target_pos = target.skeleton.target_bone_pos.clone();
-                let mut target_pos_screen = target_pos;
-                game.view_matrix.transform(&mut target_pos_screen);
-                let target_screen_3d = Vector3 { x: target_pos_screen.x, y: target_pos_screen.y, z: 0f32 };
-                if Vector3::distance(target_screen_3d, Vector3 { x: screen_center.x, y: screen_center.y, z: 0f32 }) < 355f32 {
-                    if (Vector3::distance(target.game_scene_node.position, local_player.game_scene_node.position) * 0.0254 < 20f32) && self.can_kill(local_player, target, upgrade) {
-                        keyboard::send_key(VirtualKeys::KEY_4);
-                    }
-                }
+        if !settings.aim.players.enable {
+            return;
+        }
+
+        let local_player = game.get_local_player();
+
+        if let Some(ult_ability) = local_player.abilities.get(AbilitySlot::ESlot_Signature_4) {
+            if ult_ability.coodown {
+                return;
+            }
+
+            let upgrade = ult_ability.points;
+            let Some(target) = game.get_nearest_player() else { return; };
+
+            let screen_center = game.screen.center();
+            let mut target_pos = target.skeleton.target_bone_pos;
+            game.view_matrix.transform(&mut target_pos);
+
+            let target_screen_3d = Vector3 { x: target_pos.x, y: target_pos.y, z: 0.0 };
+            let screen_distance = Vector3::distance(target_screen_3d, Vector3 { x: screen_center.x, y: screen_center.y, z: 0.0 });
+
+            let world_distance = Vector3::distance(target.game_scene_node.position, local_player.game_scene_node.position) * 0.0254;
+
+            if screen_distance < 355.0 && world_distance < 20.0 && self.can_kill(local_player, target, upgrade) {
+                keyboard::send_key(VirtualKeys::KEY_4);
             }
         }
     }
+
 
     fn draw(&mut self, g: &egui::Painter, game: &External, _: &mut Toasts) {
         let local_player = game.get_local_player();
