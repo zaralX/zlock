@@ -1,5 +1,5 @@
-pub (crate) mod offsets;
-pub (crate) mod interfaces;
+pub(crate) mod offsets;
+pub(crate) mod interfaces;
 pub mod cheat;
 
 use std::{ffi::c_void, sync::{Arc, Mutex}, time::Instant};
@@ -26,40 +26,40 @@ pub struct External
     pub global_vars: GlobalVars,
     pub game_rules: GameRules,
     pub observers: Observers,
-    pub last_ent_aim_time: Instant
+    pub last_ent_aim_time: Instant,
 }
 
 impl External
 {
     pub fn new() -> Self
     {
-        unsafe 
-        {
-            let client_ptr = memory::CLIENT_MODULE.lpBaseOfDll;
-            let players: [Player; PLAYERS_LEN] =
-            [
-               Player::new(1), Player::new(2), Player::new(3),
-               Player::new(4), Player::new(5), Player::new(6),
-               Player::new(7), Player::new(8), Player::new(9),
-               Player::new(10), Player::new(11), Player::new(12), Player::new(13) // на всякий еще добавил
-            ];
-            Self
+        unsafe
             {
-                client_ptr,
-                entity_list_ptr: memory::read_memory(client_ptr.add(offsets::client::dwEntityList)),
-                players,
-                view_matrix: Matrix::default(),
-                local_player_index: 0,
-                camera: Camera::default(),
-                entities: Vec::new(),
-                screen: egui::Rect::from_two_pos(Pos2::default(), Pos2::default()),
-                aim_punch: Vector3::default(),
-                global_vars: GlobalVars::default(),
-                game_rules: GameRules::default(),
-                observers: Observers::default(),
-                last_ent_aim_time: Instant::now()
+                let client_ptr = memory::CLIENT_MODULE.lpBaseOfDll;
+                let players: [Player; PLAYERS_LEN] =
+                    [
+                        Player::new(1), Player::new(2), Player::new(3),
+                        Player::new(4), Player::new(5), Player::new(6),
+                        Player::new(7), Player::new(8), Player::new(9),
+                        Player::new(10), Player::new(11), Player::new(12), Player::new(13) // на всякий еще добавил
+                    ];
+                Self
+                {
+                    client_ptr,
+                    entity_list_ptr: memory::read_memory(client_ptr.add(offsets::client::dwEntityList)),
+                    players,
+                    view_matrix: Matrix::default(),
+                    local_player_index: 0,
+                    camera: Camera::default(),
+                    entities: Vec::new(),
+                    screen: egui::Rect::from_two_pos(Pos2::default(), Pos2::default()),
+                    aim_punch: Vector3::default(),
+                    global_vars: GlobalVars::default(),
+                    game_rules: GameRules::default(),
+                    observers: Observers::default(),
+                    last_ent_aim_time: Instant::now(),
+                }
             }
-        }
     }
 
     pub fn update(&mut self, hero_scripts: &mut Vec<(Arc<Mutex<dyn HeroScript>>, HeroScriptSettings)>, settings: &mut Settings)
@@ -70,7 +70,7 @@ impl External
         unsafe {
             let matrix: Matrix = read_memory(self.client_ptr.add(offsets::client::dwViewMatrix));
             let matrix = Matrix::transpose(matrix);
-            
+
             let viewport = Matrix::get_viewport(egui::Vec2 { x: self.screen.max.x, y: self.screen.max.y });
             self.view_matrix = matrix * viewport;
         }
@@ -94,7 +94,7 @@ impl External
                     Some(key) => {
                         key.update();
                         hero_script.0.lock().unwrap().update(game, key.state, settings);
-                    },
+                    }
                     None => {
                         hero_script.0.lock().unwrap().update(game, KeyState::None, settings);
                     }
@@ -239,6 +239,27 @@ impl External
                 dist_a.partial_cmp(&dist_b).unwrap_or(std::cmp::Ordering::Equal)
             })
     }
+
+    pub fn get_nearest_low_hp_player(&self, max_hp: i32) -> Option<&Player> {
+        self.players
+            .iter()
+            .filter(|player| {
+                player.index != self.get_local_player().index && player.data.health < max_hp && player.is_alive()
+            }) // Фильтруем игроков по ХП
+            .min_by(|a, b| {
+                let hp_a = max_hp - a.data.health;
+                let hp_b = max_hp - b.data.health;
+
+                if hp_a == hp_b {
+                    let dist_a = Vector3::distance(a.game_scene_node.position, self.get_local_player().game_scene_node.position);
+                    let dist_b = Vector3::distance(b.game_scene_node.position, self.get_local_player().game_scene_node.position);
+                    dist_a.partial_cmp(&dist_b).unwrap_or(std::cmp::Ordering::Equal)
+                } else {
+                    hp_b.cmp(&hp_a) // Чем меньше ХП, тем выше приоритет
+                }
+            })
+    }
+
 }
 
 // float RealTime; //0x0000
@@ -293,7 +314,7 @@ impl GlobalVars
 #[derive(Debug)]
 pub struct GameRules {
     // paused: bool,
-    paused_time: f32
+    paused_time: f32,
 }
 
 impl GameRules {

@@ -97,27 +97,71 @@ pub struct VindictaUlt {}
 impl HeroScript for VindictaUlt {
     fn update(&mut self, game: &External, key_state: KeyState, settings: &mut Settings) {
         if key_state == KeyState::Pressed {
-            aim::aiming::find_player(game, game.get_local_player(), &AimProperties {
-                fov: 800f32,
-                range: 9999f32,
-                targeting: false,
-                ..Default::default()
-            });
-            unsafe {
-                if aim::aiming::player_index.is_some() {
-                    let p = game.get_player_by_index(aim::aiming::player_index.unwrap());
-                    let mut pos = p.skeleton.head_pos;
-                    pos.z -= 20f32;
-                    aim::aiming::simpled_aim_to(pos, settings.aim.angle_per_pixel, game);
-                    keyboard::send_key(VirtualKeys::KEY_4);
-                    std::thread::sleep(std::time::Duration::from_millis(17)); // 16.666 ms frame
-                    mouse::left_click();
-                    std::thread::spawn(|| {
-                        std::thread::sleep(std::time::Duration::from_millis(350));
-                        keyboard::send_key(VirtualKeys::KEY_4);
-                    });
-                }
+            let ability = game.get_local_player().abilities.get(AbilitySlot::ESlot_Signature_4);
+            if !ability.is_some() {
+                return;
             }
+            let ability = ability.unwrap();
+            let max_hp = if ability.points < 4 { 150 } else { 300 };
+            let player = game.get_nearest_low_hp_player(max_hp);
+            if !player.is_some() {
+                return;
+            }
+            let player = player.unwrap();
+            let screen_center = game.screen.center();
+            let mut target_pos = player.skeleton.target_bone_pos;
+            game.view_matrix.transform(&mut target_pos);
+
+            let target_screen_3d = Vector3 { x: target_pos.x, y: target_pos.y, z: 0.0 };
+            let screen_distance = Vector3::distance(target_screen_3d, Vector3 { x: screen_center.x, y: screen_center.y, z: 0.0 });
+
+            if screen_distance > 355.0 {
+                return;
+            }
+
+            let mut pos = player.skeleton.head_pos;
+            pos.z -= 20f32;
+            aim::aiming::simpled_aim_to(pos, settings.aim.angle_per_pixel, game);
+            keyboard::send_key(VirtualKeys::KEY_4);
+            std::thread::sleep(std::time::Duration::from_millis(17)); // 16.666 ms frame
+            mouse::left_click();
+            std::thread::spawn(|| {
+                std::thread::sleep(std::time::Duration::from_millis(350));
+                keyboard::send_key(VirtualKeys::KEY_4);
+            });
+        } else {
+            let ability = game.get_local_player().abilities.get(AbilitySlot::ESlot_Signature_4);
+            if !ability.is_some() {
+                return;
+            }
+            let ability = ability.unwrap();
+            let max_hp = if ability.points < 4 { 50 } else { 140 };
+            let player = game.get_nearest_low_hp_player(max_hp);
+            if !player.is_some() {
+                return;
+            }
+            let player = player.unwrap();
+            let screen_center = game.screen.center();
+            let mut target_pos = player.skeleton.target_bone_pos;
+            game.view_matrix.transform(&mut target_pos);
+
+            let target_screen_3d = Vector3 { x: target_pos.x, y: target_pos.y, z: 0.0 };
+            let screen_distance = Vector3::distance(target_screen_3d, Vector3 { x: screen_center.x, y: screen_center.y, z: 0.0 });
+
+            if screen_distance > 355.0 {
+                return;
+            }
+
+            let mut pos = player.skeleton.head_pos;
+            pos.z -= 20f32;
+            aim::aiming::simpled_aim_to(pos, settings.aim.angle_per_pixel, game);
+            keyboard::send_key(VirtualKeys::KEY_4);
+            std::thread::sleep(std::time::Duration::from_millis(17)); // 16.666 ms frame
+            mouse::left_click();
+            std::thread::spawn(|| {
+                std::thread::sleep(std::time::Duration::from_millis(350));
+                keyboard::send_key(VirtualKeys::KEY_4);
+            });
         }
     }
 
